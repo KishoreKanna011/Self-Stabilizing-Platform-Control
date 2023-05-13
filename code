@@ -1,0 +1,47 @@
+#include <Wire.h>
+#include <MPU6050.h>
+
+MPU6050 mpu;
+
+const int motorPin = 9;
+const int targetAngle = 0;
+const int motorSpeed = 10;
+
+int currentAngle;
+
+void setup() {
+  Wire.begin();
+  Serial.begin(9600);
+
+  mpu.initialize();
+  
+  pinMode(motorPin, OUTPUT);
+}
+
+void loop() {
+  // Read sensor data
+  int16_t ax, ay, az, gx, gy, gz;
+  mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+  
+  // Calculate pitch and roll angles
+  float rollAngle = atan2(ay, az) * (180.0 / PI);
+  float pitchAngle = atan2(-ax, sqrt(pow(ay, 2) + pow(az, 2))) * (180.0 / PI);
+  
+  // Calculate the current angle by averaging the pitch and roll angles
+  currentAngle = (int)((rollAngle + pitchAngle) / 2);
+  
+  // Print the current angle
+  Serial.print("Current Angle: ");
+  Serial.println(currentAngle);
+  
+  // Adjust motor rotation based on the tilt
+  if (currentAngle > targetAngle) {
+    digitalWrite(motorPin, HIGH);
+    delay(1000);  // Adjust this delay as needed to control the motor rotation
+    digitalWrite(motorPin, LOW);
+  } else if (currentAngle < targetAngle) {
+    digitalWrite(motorPin, LOW);
+    delay(1000);  // Adjust this delay as needed to control the motor rotation
+    digitalWrite(motorPin, HIGH);
+  }
+}
